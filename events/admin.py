@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import Event, EventProxy
 
-# Register your models here.
+@admin.register(EventProxy)
+class EventAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        return Event.objects.all()

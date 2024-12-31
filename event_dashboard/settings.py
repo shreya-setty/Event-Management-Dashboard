@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from mongoengine import connect
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -27,9 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -38,11 +36,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_mongoengine',
     'corsheaders',
-    'events',
-    'attendees',
-    'tasks',
+    'events.apps.EventsConfig',
+    'attendees.apps.AttendeesConfig',
+    'tasks.apps.TasksConfig',
+    'django_filters',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,26 +78,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'event_dashboard.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Dummy database setup to satisfy Django's requirements for database configuration
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'event_dashboard',
-        'USER': 'shreya_admin',
-        'PASSWORD': 'shreya1',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
-
+# MongoDB connection
+# Replace 'event_dashboard', 'localhost', and '27017' with your actual database details if different
+connect('event_dashboard', host='localhost', port=27017)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -112,10 +110,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Authentication Configuration
+# Replace the `mongoengine.django` backend with a custom implementation or disable the Django backend
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication backend
+]
+
+# Session Engine Configuration
+# Remove references to `mongoengine.django.sessions`
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -124,19 +131,35 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Django REST Framework Configuration
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
+
+# MongoEngine User Model
+# If you want to use a custom MongoEngine-based user model, define it separately in your app's models.py.
+
+MONGODB_DATABASES = {
+    'default': {
+        'name': 'event_dashboard',
+        'host': 'localhost',
+        'port': 27017,
+    }
 }

@@ -1,0 +1,2 @@
+def django():
+    return None

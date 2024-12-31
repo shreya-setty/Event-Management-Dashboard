@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import Attendee, AttendeeProxy
 
-# Register your models here.
+@admin.register(AttendeeProxy)
+class AttendeeAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        return Attendee.objects.all()
